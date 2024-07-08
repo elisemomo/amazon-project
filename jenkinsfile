@@ -64,11 +64,9 @@ pipeline{
         stage("Docker Build and Push"){
             steps{
                 script{
-                   withDockerRegistry(credentialsId: 'Docker_hub', toolName: 'Docker'){   
                        sh "docker build -t amazonproject ."
                        
                        sh "docker push mukomelise/amazonproject:latest"
-                    }
                 }
             }
         }
