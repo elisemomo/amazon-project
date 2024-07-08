@@ -1,0 +1,71 @@
+pipeline{
+    agent any
+    tools{
+        NodeJs "NodeJS 22.4.0"
+    }
+    environment{
+        Dockerhub_credentials = 'Docker_hub'
+        SCANNER_HOME =tool 'Sonar_scanner'
+    }
+    stages{
+        stage("Clean work space"){
+            steps{
+                cleanWs()
+            }
+        }
+
+        stage('checkout'){
+            steps{
+                git branch: 'main', url: 'https://github.com/elisemomo/amazon-project.git'
+            }
+        }
+
+        stage("Sonarqube Analysis "){
+            steps{
+                withSonarQubeEnv('sonar-server') {
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Amazonproject \
+                    -Dsonar.projectKey=Amazonproject '''
+                }
+            }
+        }
+        stage("quality gate"){
+           steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+                }
+            } 
+        }
+        stage('Install Dependencies') {
+            steps {
+                sh "npm install"
+            }
+        }
+        stage('OWASP FS SCAN') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'Dependency-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        stage('TRIVY FS SCAN') {
+            steps {
+                sh "trivy fs . > trivyfs.txt"
+            }
+        }
+        stage("Docker Build and Push"){
+            steps{
+                script{
+                   withDockerRegistry(credentialsId: 'Docker_hub', toolName: 'Docker'){   
+                       sh "docker build -t amazonproject ."
+                       
+                       sh "docker push mukomelise/amazonproject:latest"
+                    }
+                }
+            }
+        }
+        stage("TRIVY SCAN"){
+            steps{
+                sh "trivy image mukomelise/amazonproject:latest > trivyimage.txt" 
+            }
+        }
+    }
+}
