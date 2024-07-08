@@ -65,6 +65,8 @@ pipeline{
             steps{
                 script{
                        sh "docker build -t amazonproject ."
+
+                       sh 'docker tag amazonproject:latest mukomelise/amazonproject:latest'
                        
                        sh "docker push mukomelise/amazonproject:latest"
                 }
