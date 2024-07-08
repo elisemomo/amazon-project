@@ -79,5 +79,12 @@ pipeline{
                 sh "trivy image mukomelise/amazonproject:latest > trivyimage.txt" 
             }
         }
+        stage('Deploy to Container'){
+            steps{
+                Script{
+                  sh 'docker run -d --name amazonproject -p 3800:3000 mukomelise/amazonproject:latest'
+                }
+            }
+        }
     }
 }
