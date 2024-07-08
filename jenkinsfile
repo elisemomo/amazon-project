@@ -45,13 +45,12 @@ pipeline{
             steps {
                 sh "trivy fs . > trivyfs.txt"
             }
+        }
         stage('OWASP FS SCAN') {
             steps {
                 dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit --nvdApiKey 4bdf4acc-8eae-45c1-bfc4-844d549be812', odcInstallation: 'Dependency-Check'
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
-        }
-        
         }
         stage("Docker Build and Push"){
             steps{
